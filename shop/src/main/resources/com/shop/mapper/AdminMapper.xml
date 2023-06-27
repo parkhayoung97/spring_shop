@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shop.mapper.AdminMapper">
+
+	<!--상품 등록 -->
+	<insert id="bookEnroll">
+		<selectKey resultType="int" keyProperty="bookId"
+			order="AFTER">
+
+			select user_seq1.currval from dual
+
+		</selectKey>
+		insert into vam_book(bookId,bookName, authorId, publeYear, publisher,
+		cateCode, bookPrice, bookStock, bookDiscount, bookIntro, bookContents)
+		values(user_seq1.nextval,#{bookName}, #{authorId}, #{publeYear},
+		#{publisher}, #{cateCode}, #{bookPrice}, #{bookStock},
+		#{bookDiscount}, #{bookIntro}, #{bookContents})
+	</insert>
+
+
+	<!-- 카테고리 리스트 -->
+	<select id="cateList" resultType="com.shop.model.CateVO">
+
+		select * from vam_bcate order
+		by cateCode
+
+	</select>
+
+	<!-- 상품 리스트 -->
+  	<select id="goodsGetList" resultType="com.shop.model.BookVO">
+  	
+	  	<![CDATA[
+		select * from(
+		    select /*+INDEX_DESC(vam_book SYS_C007551)*/ rownum as rn, bookId, bookName,
+		        (select authorName from vam_author where vam_book.authorId = vam_author.authorId) authorName,
+		        (select cateName from vam_bcate where vam_book.cateCode = vam_bcate.cateCode) cateName,bookStock,regDate
+		    from vam_book 
+		    where 
+		]]>    
+		
+		    <if test="keyword != null">
+		    
+			    bookName like '%' || #{keyword} || '%' and
+			    
+		    </if>
+		     
+		<![CDATA[    
+		    rownum <= #{pageNum} * #{amount} 
+		    )
+		where rn > (#{pageNum} -1) * #{amount}		  	
+  		]]>
+  	
+  	</select>
+  	
+  	<!-- 상품 총 개수 -->
+  	<select id="goodsGetTotal" resultType="int">
+  	
+  		select count(*) from vam_book
+  		
+  		<if test="keyword != null">
+  		
+  			where bookName like '%' || #{keyword} || '%'
+  		</if>
+  		
+  	</select> 
+
+</mapper>
